@@ -180,116 +180,147 @@ const Mutation = {
         // return post
 
     },
-    deletePost(parent, args, { db, pubSub } = context, info) {
-        const postIndex = db.posts.findIndex((post) => {
-            return post.id === args.id
-        })
+    async deletePost(parent, args, { db, pubSub, prisma } = context, info) {
 
-        if (postIndex === -1) {
-            throw new Error("The post does not exist")
-        }
-
-        const deletedPosts = db.posts.splice(postIndex, 1)
-
-        db.comments = db.comments.filter((comment) => {
-            return comment.post !== args.id
-        })
-
-        if (deletedPosts[0].published) {
-            pubSub.publish('post', {
-                post: {
-                    mutation: 'DELETED',
-                    data: deletedPosts[0]
-                }
-            })
-        }
-
-        return deletedPosts[0]
-    },
-    updatePost (parent, args, { db, pubSub } = context, info) {
-        const { id, data } = args
-
-        const post = db.posts.find((post) => {
-            return post.id === id
-        })
-
-        const originalPost = {...post}
-
-        if (!post) {
-            throw new Error("Post not found")
-        }
-
-        if (typeof data.title === 'string') {
-            post.title = data.title
-        }
-
-        if (typeof data.body === 'string') {
-            post.body = data.body
-        }
-
-        if (typeof data.published === 'boolean') {
-            post.published = data.published
-
-            // was the post originally pub and now not published
-            if (originalPost.published && !post.published) {
-                // deleted event
-                pubSub.publish('post', {
-                    post: {
-                        mutation: 'DELETED',
-                        data: originalPost
-                    }
-                })
-            } else if (!originalPost.published && post.published) {
-                // was the post originally pub and now not published
-                // created event
-                pubSub.publish('post', {
-                    post: {
-                        mutation: 'CREATED',
-                        data: data
-                    }
-                })
+        return await prisma.mutation.deletePost({
+            where: {
+                id: args.id
             }
-        } else if(post.published) {
-            // if its being updated and the published value is not changed
-            // updated
-            pubSub.publish('post', {
-                post: {
-                    mutation: 'UPDATED',
-                    data: post
-                }
-            })
-        }
+        }, info)
 
-        return post
+        // const postIndex = db.posts.findIndex((post) => {
+        //     return post.id === args.id
+        // })
+        //
+        // if (postIndex === -1) {
+        //     throw new Error("The post does not exist")
+        // }
+        //
+        // const deletedPosts = db.posts.splice(postIndex, 1)
+        //
+        // db.comments = db.comments.filter((comment) => {
+        //     return comment.post !== args.id
+        // })
+        //
+        // if (deletedPosts[0].published) {
+        //     pubSub.publish('post', {
+        //         post: {
+        //             mutation: 'DELETED',
+        //             data: deletedPosts[0]
+        //         }
+        //     })
+        // }
+        //
+        // return deletedPosts[0]
+    },
+    async updatePost (parent, args, { db, pubSub, prisma } = context, info) {
+
+        return prisma.mutation.updatePost({
+            where: {
+                id: args.id
+            },
+            data: args.data
+        })
+        // const { id, data } = args
+        //
+        // const post = db.posts.find((post) => {
+        //     return post.id === id
+        // })
+        //
+        // const originalPost = {...post}
+        //
+        // if (!post) {
+        //     throw new Error("Post not found")
+        // }
+        //
+        // if (typeof data.title === 'string') {
+        //     post.title = data.title
+        // }
+        //
+        // if (typeof data.body === 'string') {
+        //     post.body = data.body
+        // }
+        //
+        // if (typeof data.published === 'boolean') {
+        //     post.published = data.published
+        //
+        //     // was the post originally pub and now not published
+        //     if (originalPost.published && !post.published) {
+        //         // deleted event
+        //         pubSub.publish('post', {
+        //             post: {
+        //                 mutation: 'DELETED',
+        //                 data: originalPost
+        //             }
+        //         })
+        //     } else if (!originalPost.published && post.published) {
+        //         // was the post originally pub and now not published
+        //         // created event
+        //         pubSub.publish('post', {
+        //             post: {
+        //                 mutation: 'CREATED',
+        //                 data: data
+        //             }
+        //         })
+        //     }
+        // } else if(post.published) {
+        //     // if its being updated and the published value is not changed
+        //     // updated
+        //     pubSub.publish('post', {
+        //         post: {
+        //             mutation: 'UPDATED',
+        //             data: post
+        //         }
+        //     })
+        // }
+        //
+        // return post
 
     },
-    createComment(parent, args, { db, pubSub } = context, info) {
-        const userExists = db.users.some((user) => {
-            return user.id === args.data.author
-        })
+    createComment(parent, args, { db, pubSub, prisma } = context, info) {
+        return prisma.mutation.createComment({
+            data: {
+                text: args.data.text,
+                author: {
+                    connect: {
+                        id: args.data.author
+                    }
+                },
+                post: {
+                    connect: {
+                        id: args.data.post
+                    }
+                }
+            }
+        }, info)
 
-        const postsExists = db.posts.some((post) => {
-            return post.id == args.data.post && post.published
-        })
 
-        if (!userExists || !postsExists) {
-            throw new Error("Unable to find user and post")
-        }
-
-        const comment = {
-            id: uuidv4(),
-            ...args.data
-        }
-
-        db.comments.push(comment)
-        // we provide the channel name, and actual data we are trying to publish, {subscription name: value to come back}
-        pubSub.publish(`comment ${args.data.post}`, { comment: {
-            mutation: "CREATED",
-            data: comment
-
-            }})
-
-        return comment
+        // const userExists = db.users.some((user) => {
+        //     return user.id === args.data.author
+        // })
+        //
+        // const postsExists = db.posts.some((post) => {
+        //     return post.id == args.data.post && post.published
+        // })
+        //
+        // if (!userExists || !postsExists) {
+        //     throw new Error("Unable to find user and post")
+        // }
+        //
+        // const comment = {
+        //     id: uuidv4(),
+        //     ...args.data
+        // }
+        //
+        // db.comments.push(comment)
+        // // we provide the channel name, and actual data we are trying to publish, {subscription name: value to come back}
+        // pubSub.publish(`comment ${args.data.post}`, { comment: {
+        //     mutation: "CREATED",
+        //     data: comment
+        //
+        //     }})
+        //
+        // return comment
     },
     deleteComment(parent, args, { db, pubSub } = context, info) {
 
@@ -314,28 +345,28 @@ const Mutation = {
 
     },
     updateComment(parent, args, { db, pubSub } = context, info) {
-        const { id, data } = args
-
-        const comment = db.comments.find((comment) => {
-            return comment.id === id
-        })
-
-        if (!comment) {
-            throw new Error("Sorry that comment doesn't exist")
-        }
-
-        if (typeof data.text === 'string') {
-            comment.text = data.text
-        }
-
-        pubSub.publish(`comment ${comment.post}`, {
-            comment: {
-                mutation: "UPDATED",
-                data: comment
-            }
-        })
-
-        return comment
+        // const { id, data } = args
+        //
+        // const comment = db.comments.find((comment) => {
+        //     return comment.id === id
+        // })
+        //
+        // if (!comment) {
+        //     throw new Error("Sorry that comment doesn't exist")
+        // }
+        //
+        // if (typeof data.text === 'string') {
+        //     comment.text = data.text
+        // }
+        //
+        // pubSub.publish(`comment ${comment.post}`, {
+        //     comment: {
+        //         mutation: "UPDATED",
+        //         data: comment
+        //     }
+        // })
+        //
+        // return comment
     }
 }
 
