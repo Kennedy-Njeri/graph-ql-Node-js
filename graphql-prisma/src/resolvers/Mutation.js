@@ -6,12 +6,12 @@ const Mutation = {
     async createUser(parent, args, { db, prisma } = context, info) {
 
 
-        const emailTaken = await prisma.exists.User({email: args.data.email})
-
-
-        if(emailTaken) {
-            throw new Error("That email is Taken!")
-        }
+        // const emailTaken = await prisma.exists.User({email: args.data.email})
+        //
+        //
+        // if(emailTaken) {
+        //     throw new Error("That email is Taken!")
+        // }
 
         const user = await prisma.mutation.createUser({ data: args.data}, info)
 
@@ -48,13 +48,13 @@ const Mutation = {
     },
     async deleteUser(parent, args, { db, prisma } = context, info) {
 
-        const  userExists = await prisma.exists.User({ id: args.id })
+        // const  userExists = await prisma.exists.User({ id: args.id })
+        //
+        // if (!userExists) {
+        //     throw new Error("User not Found")
+        // }
 
-        if (!userExists) {
-            throw new Error("User not Found")
-        }
-
-        return prisma.mutation.deleteUser({
+        return await prisma.mutation.deleteUser({
             where: {
                 id: args.id
             }
@@ -96,41 +96,47 @@ const Mutation = {
         // return deletedUsers[0]
 
     },
-    updateUser(parent, args, { db } = context, info) {
+    async updateUser(parent, args, { db, prisma } = context, info) {
+        return await prisma.mutation.updateUser({
+            where: {
+                id: args.id
+            },
+            data: args.data
+        }, info)
 
-        const { id, data } = args
-
-        const user = db.users.find((user) => {
-            return user.id === id
-        })
-
-
-        if(!user) {
-            throw new Error("User not found")
-        }
-
-
-        if (typeof data.email === 'string') {
-            const emailTaken = db.users.some((user) => {
-                return user.email === data.email
-            })
-
-            if (emailTaken) {
-                throw new Error("Email is taken")
-            }
-
-             user.email = data.email
-        }
-
-        if (typeof data.name === 'string') {
-            user.name = data.name
-        }
-
-        if (typeof data.age !== 'undefined'){
-            user.age = data.age
-        }
-
-        return user
+        // const { id, data } = args
+        //
+        // const user = db.users.find((user) => {
+        //     return user.id === id
+        // })
+        //
+        //
+        // if(!user) {
+        //     throw new Error("User not found")
+        // }
+        //
+        //
+        // if (typeof data.email === 'string') {
+        //     const emailTaken = db.users.some((user) => {
+        //         return user.email === data.email
+        //     })
+        //
+        //     if (emailTaken) {
+        //         throw new Error("Email is taken")
+        //     }
+        //
+        //      user.email = data.email
+        // }
+        //
+        // if (typeof data.name === 'string') {
+        //     user.name = data.name
+        // }
+        //
+        // if (typeof data.age !== 'undefined'){
+        //     user.age = data.age
+        // }
+        //
+        // return user
 
     },
     createPost(parent, args, { db, pubSub } = context, info) {
