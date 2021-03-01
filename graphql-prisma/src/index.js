@@ -6,6 +6,7 @@ import Mutation from './resolvers/Mutation'
 import Post from './resolvers/Post'
 import User from './resolvers/User'
 import Subscription from './resolvers/Subscription'
+import prisma from './prisma'
 
 
 
@@ -29,7 +30,8 @@ const server = new GraphQLServer({
     },
     context: {
         db: db,
-        pubSub: pubSub
+        pubSub: pubSub,
+        prisma
     }
 })
 server.start(() => console.log('Server is running on localhost:4000'))
