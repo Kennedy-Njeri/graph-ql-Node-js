@@ -139,31 +139,45 @@ const Mutation = {
         // return user
 
     },
-    createPost(parent, args, { db, pubSub } = context, info) {
+    async createPost(parent, args, { db, pubSub, prisma } = context, info) {
+
+        return prisma.mutation.createPost({
+            data: {
+                title: args.data.title,
+                body: args.data.body,
+                published: args.data.published,
+                author: {
+                    connect: {
+                        id: args.data.author
+                    }
+                }
+            }
+        }, info)
+
         // some() method tests whether at least one element in the array passes the test implemented by the provided function // returns a boolean
-        const userExists = db.users.some((user) => {
-            return user.id === args.data.author
-        })
-
-        if(!userExists) {
-            throw new Error("User does not Exist!")
-        }
-
-        const post = {
-            id: uuidv4(),
-            ...args.data
-        }
-
-        db.posts.push(post)
-
-        if(args.data.published) {
-            pubSub.publish('post', { post: {
-                mutation: 'CREATED',
-                data: post
-                }})
-        }
-
-        return post
+        // const userExists = db.users.some((user) => {
+        //     return user.id === args.data.author
+        // })
+        //
+        // if(!userExists) {
+        //     throw new Error("User does not Exist!")
+        // }
+        //
+        // const post = {
+        //     id: uuidv4(),
+        //     ...args.data
+        // }
+        //
+        // db.posts.push(post)
+        //
+        // if(args.data.published) {
+        //     pubSub.publish('post', { post: {
+        //         mutation: 'CREATED',
+        //         data: post
+        //         }})
+        // }
+        //
+        // return post
 
     },
     deletePost(parent, args, { db, pubSub } = context, info) {
