@@ -46,40 +46,54 @@ const Mutation = {
 
         //console.log(args)
     },
-    deleteUser(parent, args, { db } = context, info) {
-        //  method returns the index of the first element in the array that satisfies the provided testing function. Otherwise, it returns -1
-        const userIndex = db.users.findIndex((user) => {
-            return user.id === args.id
-        })
+    async deleteUser(parent, args, { db, prisma } = context, info) {
 
-        if (userIndex === -1) {
-            throw new Error("User not found")
+        const  userExists = await prisma.exists.User({ id: args.id })
+
+        if (!userExists) {
+            throw new Error("User not Found")
         }
 
-        // returns an array of an object i.e one object deleted
-        const  deletedUsers = db.users.splice(userIndex, 1)
-
-
-        db.posts = db.posts.filter((post) => {
-            const match = post.author === args.id
-
-            if (match) {
-                db.comments = db.comments.filter((comment) => {
-                    return comment.post !== post.id
-                })
+        return prisma.mutation.deleteUser({
+            where: {
+                id: args.id
             }
-
-            // return true when we did not find a match
-            return !match
-        })
-
-        // removes comments from other posts from other users post
-        db.comments = db.comments.filter((comment) => {
-            return comment.author !== args.id
-        })
+        }, info)
 
 
-        return deletedUsers[0]
+        //  method returns the index of the first element in the array that satisfies the provided testing function. Otherwise, it returns -1
+        // const userIndex = db.users.findIndex((user) => {
+        //     return user.id === args.id
+        // })
+        //
+        // if (userIndex === -1) {
+        //     throw new Error("User not found")
+        // }
+        //
+        // // returns an array of an object i.e one object deleted
+        // const  deletedUsers = db.users.splice(userIndex, 1)
+        //
+        //
+        // db.posts = db.posts.filter((post) => {
+        //     const match = post.author === args.id
+        //
+        //     if (match) {
+        //         db.comments = db.comments.filter((comment) => {
+        //             return comment.post !== post.id
+        //         })
+        //     }
+        //
+        //     // return true when we did not find a match
+        //     return !match
+        // })
+        //
+        // // removes comments from other posts from other users post
+        // db.comments = db.comments.filter((comment) => {
+        //     return comment.author !== args.id
+        // })
+        //
+        //
+        // return deletedUsers[0]
 
     },
     updateUser(parent, args, { db } = context, info) {
