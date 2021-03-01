@@ -3,31 +3,46 @@ import {v4 as uuidv4} from "uuid";
 
 
 const Mutation = {
-    createUser(parent, args, { db } = context, info) {
-        const emailTaken = db.users.some((user) => {
-            return user.email === args.data.email
-        })
+    async createUser(parent, args, { db, prisma } = context, info) {
+
+
+        const emailTaken = await prisma.exists.User({email: args.data.email})
+
 
         if(emailTaken) {
             throw new Error("That email is Taken!")
         }
 
-        // b4 use of the spread
-        // const user = {
-        //     id: uuidv4(),
-        //     name: args.name,
-        //     email: args.email,
-        //     age: args.age
-        // }
-
-        const user = {
-            id: uuidv4(),
-            ...args.data
-        }
-
-        db.users.push(user)
+        const user = await prisma.mutation.createUser({ data: args.data}, info)
 
         return user
+
+
+
+        // const emailTaken = db.users.some((user) => {
+        //     return user.email === args.data.email
+        // })
+        //
+        // if(emailTaken) {
+        //     throw new Error("That email is Taken!")
+        // }
+        //
+        // // b4 use of the spread
+        // // const user = {
+        // //     id: uuidv4(),
+        // //     name: args.name,
+        // //     email: args.email,
+        // //     age: args.age
+        // // }
+        //
+        // const user = {
+        //     id: uuidv4(),
+        //     ...args.data
+        // }
+        //
+        // db.users.push(user)
+        //
+        // return user
 
         //console.log(args)
     },

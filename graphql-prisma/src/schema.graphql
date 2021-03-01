@@ -31,14 +31,12 @@ type Subscription {
 input CreateUserInput {
     name: String!
     email: String!
-    age: Float
 
 }
 
 input UpdateUserInput {
     name: String
     email: String
-    age: Int
 }
 
 
