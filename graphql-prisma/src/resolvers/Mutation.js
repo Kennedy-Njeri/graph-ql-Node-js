@@ -1,9 +1,29 @@
-import {v4 as uuidv4} from "uuid";
+const bcrypt = require('bcryptjs')
+var jwt = require('jsonwebtoken');
 
 
 
 const Mutation = {
     async createUser(parent, args, { db, prisma } = context, info) {
+
+        if(args.data.password.length < 8) {
+            throw new Error("Password must be 8 characters or longer")
+        }
+
+        const  password = await bcrypt.hash(args.data.password, 10)
+
+
+
+        const user = prisma.mutation.createUser({ data: {
+            ...args.data,
+                password: password
+            }})
+
+
+        return {
+            user,
+            token: jwt.sign({ userId: user.id}, 'itscool')
+        }
 
 
         // const emailTaken = await prisma.exists.User({email: args.data.email})
@@ -12,12 +32,6 @@ const Mutation = {
         // if(emailTaken) {
         //     throw new Error("That email is Taken!")
         // }
-
-        const user = await prisma.mutation.createUser({ data: args.data}, info)
-
-        return user
-
-
 
         // const emailTaken = db.users.some((user) => {
         //     return user.email === args.data.email
@@ -45,6 +59,29 @@ const Mutation = {
         // return user
 
         //console.log(args)
+    },
+    async login(parent, args, { prisma } = context, info) {
+        const user = await prisma.query.user({
+            where: {
+                email: args.data.email
+            }
+        })
+
+        if (!user){
+            throw new Error("Unable to login")
+        }
+
+        const isMatch = await bcrypt.compare(args.data.password, user.password)
+
+        if (!isMatch){
+            throw new Error('Unable to login')
+        }
+
+        return {
+            user,
+            token: jwt.sign({ userId: user.id}, 'itscool')
+        }
+
     },
     async deleteUser(parent, args, { db, prisma } = context, info) {
 
