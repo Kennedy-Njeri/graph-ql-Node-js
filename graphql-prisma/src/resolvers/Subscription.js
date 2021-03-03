@@ -16,18 +16,29 @@ const Subscription = {
         }
     },
     comment: {
-        subscribe(parent, args, { db, pubSub } = context, info) {
-            const {postId} = args
-            const post = db.posts.find((post) => {
-                return post.id === postId && post.published
-            })
+        subscribe(parent, args, {postId}, { db, pubSub, prisma } = context, info) {
 
-            if(!post) {
-                throw new Error("Post not found")
-            }
+            return prisma.subscription.comment({
+                where: {
+                    node: {
+                        post: {
+                            id: postId
+                        }
+                    }
+                }
+            }, info)
 
-            // subscription name
-            return pubSub.asyncIterator(`comment ${postId}`)
+            // const {postId} = args
+            // const post = db.posts.find((post) => {
+            //     return post.id === postId && post.published
+            // })
+            //
+            // if(!post) {
+            //     throw new Error("Post not found")
+            // }
+            //
+            // // subscription name
+            // return pubSub.asyncIterator(`comment ${postId}`)
         }
     },
     post: {
