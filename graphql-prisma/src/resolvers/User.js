@@ -3,7 +3,19 @@ import getUserId from "../utils/getUserId";
 
 const User = {
 
-
+    posts: {
+        fragment: 'fragment userId on User {id}',
+        resolve(parent, args, {request, prisma}, info) {
+            return prisma.query.posts({
+                where: {
+                    published,
+                    author: {
+                        id: parent.id
+                    }
+                }
+            })
+        }
+    },
     email: {
         fragment: 'fragment userId on User {id}',
         resolve(parent, args, { request } = context, info) {
