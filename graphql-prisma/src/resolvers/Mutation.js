@@ -84,7 +84,10 @@ const Mutation = {
         }
 
     },
-    async deleteUser(parent, args, { db, prisma } = context, info) {
+    async deleteUser(parent, args, { db, prisma, request } = context, info) {
+
+        const userId = getUserId(request)
+
 
         // const  userExists = await prisma.exists.User({ id: args.id })
         //
@@ -94,7 +97,7 @@ const Mutation = {
 
         return await prisma.mutation.deleteUser({
             where: {
-                id: args.id
+                id: userId
             }
         }, info)
 
@@ -134,10 +137,13 @@ const Mutation = {
         // return deletedUsers[0]
 
     },
-    async updateUser(parent, args, { db, prisma } = context, info) {
+    async updateUser(parent, args, { db, prisma, request } = context, info) {
+
+        const userId = getUserId(request)
+
         return await prisma.mutation.updateUser({
             where: {
-                id: args.id
+                id: userId
             },
             data: args.data
         }, info)
@@ -220,7 +226,20 @@ const Mutation = {
         // return post
 
     },
-    async deletePost(parent, args, { db, pubSub, prisma } = context, info) {
+    async deletePost(parent, args, {  pubSub, prisma, request } = context, info) {
+
+        const userId = getUserId(request)
+
+        const postExists = await prisma.exists.Post({
+            id: args.id,
+            author: {
+                id: userId
+            }
+        })
+
+        if (!postExists){
+           throw new Error("Unable to delete post")
+        }
 
         return await prisma.mutation.deletePost({
             where: {
@@ -253,7 +272,20 @@ const Mutation = {
         //
         // return deletedPosts[0]
     },
-    async updatePost (parent, args, { db, pubSub, prisma } = context, info) {
+    async updatePost (parent, args, { db, pubSub, prisma, request } = context, info) {
+
+        const userId = getUserId(request)
+
+        const postExists = await prisma.exists.Post({
+            id: args.id,
+            author: {
+                id: userId
+            }
+        })
+
+        if (!postExists){
+            throw new Error("Unable to update post")
+        }
 
         return prisma.mutation.updatePost({
             where: {
@@ -317,13 +349,16 @@ const Mutation = {
         // return post
 
     },
-    createComment(parent, args, { db, pubSub, prisma } = context, info) {
+    createComment(parent, args, { db, pubSub, prisma, request } = context, info) {
+
+        const userId = getUserId(request)
+
         return prisma.mutation.createComment({
             data: {
                 text: args.data.text,
                 author: {
                     connect: {
-                        id: args.data.author
+                        id: userId
                     }
                 },
                 post: {
@@ -362,7 +397,20 @@ const Mutation = {
         //
         // return comment
     },
-    async deleteComment(parent, args, { db, pubSub, prisma } = context, info) {
+    async deleteComment(parent, args, { pubSub, prisma, request } = context, info) {
+
+        const userId = getUserId(request)
+
+        const commentExists = await prisma.exists.Comment({
+            id: args.id,
+            author: {
+                id: userId
+            }
+        })
+
+        if (!commentExists){
+            throw new Error("Unable to delete Comment")
+        }
 
         return prisma.mutation.deleteComment({
             where:{
@@ -391,7 +439,21 @@ const Mutation = {
         // return deletedComment[0]
 
     },
-    async updateComment(parent, args, { db, pubSub, prisma } = context, info) {
+    async updateComment(parent, args, { db, pubSub, prisma, request } = context, info) {
+
+        const userId = getUserId(request)
+
+        const commentExists = await prisma.exists.Comment({
+            id: args.id,
+            author: {
+                id: userId
+            }
+        })
+
+        if (!commentExists){
+            throw new Error("Unable to update Comment")
+        }
+
         return await prisma.mutation.updateComment({
             where: {
                 id: args.id
