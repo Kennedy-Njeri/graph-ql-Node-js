@@ -3,16 +3,20 @@ import getUserId from "../utils/getUserId";
 const Query = {
     users(parent, args, { db, prisma } = context, info) {
 
-        const operationArgs = {}
+        const operationArgs = {
+            where: {
+                published: true
+            }
+        }
 
         if (args.query){
-            operationArgs.where = {
-                OR: [{
-                    name_contains: args.query
-                }, {
-                    email_contains: args.query
-                }]
-            }
+
+            operationArgs.where.OR = [{
+                name_contains: args.query
+            }, {
+                email_contains: args.query
+            }]
+
         }
         return prisma.query.users(operationArgs, info)
         // if (!args.query) {
@@ -37,6 +41,31 @@ const Query = {
     comments(parent, args, { db, prisma } = context, info) {
         return prisma.query.comments(null, info)
         //return db.comments
+    },
+
+    async myPosts(parent, args, { db, prisma, request } = context, info) {
+
+        const userId = getUserId(request)
+
+        const operationArgs = {
+            where: {
+                author: {
+                    id: userId
+                }
+            }
+
+        }
+        
+        if (args.query) {
+            operationArgs.where.OR = [{
+                title_contains: args.query
+            }, {
+                body_contains: args.query
+            }]
+        }
+
+        return prisma.query.posts(operationArgs, info)
+
     },
     async post(parent, args, { db, prisma, request } = context, info) {
 

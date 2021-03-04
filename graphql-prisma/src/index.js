@@ -1,11 +1,6 @@
 import { GraphQLServer, PubSub } from 'graphql-yoga'
 import db from './db'
-import Query from './resolvers/Query'
-import Comment from './Comment'
-import Mutation from './resolvers/Mutation'
-import Post from './resolvers/Post'
-import User from './resolvers/User'
-import Subscription from './resolvers/Subscription'
+import {resolvers, fragmentReplacements} from "./resolvers/index";
 import prisma from './prisma'
 
 
@@ -20,14 +15,8 @@ export const pubSub = new PubSub()
 
 const server = new GraphQLServer({
     typeDefs: './src/schema.graphql',
-    resolvers: {
-        Query,
-        Subscription,
-        Comment,
-        User,
-        Post,
-        Mutation,
-    },
+    resolvers: resolvers,
+    fragmentReplacements,
     context(request) {
         //console.log(request.request.headers)
         return {
@@ -36,7 +25,7 @@ const server = new GraphQLServer({
             prisma,
             request
         }
-    }
+    },
 })
 server.start(() => console.log('Server is running on localhost:4000'))
 
